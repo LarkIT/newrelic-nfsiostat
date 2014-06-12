@@ -348,10 +348,6 @@ class DeviceData:
             rtt_per_op = 0.0
             exe_per_op = 0.0
 
-        op += ':'
-        print '%s' % op.lower().ljust(15),
-        print '  ops/s\t\t   kB/s\t\t  kB/op\t\tretrans\t\tavg RTT (ms)\tavg exe (ms)'
-
         return [ (ops / sample_time),
                 (kilobytes / sample_time),
                 kb_per_op,
