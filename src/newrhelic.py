@@ -55,7 +55,6 @@ class NewRHELic:
 
         self.first_run = True   #this is set to False after the first run function is called
 
-        logging.basicConfig(filename='/tmp/newrhelic.log', level=logging.WARNING, format='%(asctime)s : %(levelname)s : %(message)s')
 
 	#Various IO buffers
         self.buffers = {
@@ -77,10 +76,29 @@ class NewRHELic:
             'sout': 0,
         }
 
+        # Open the config and log files in their own try/except
         try:
             config = ConfigParser.RawConfigParser()
             config.read(self.config_file)
+          
+            logfilename = config.get('plugin','logfile')
+            loglevel = config.get('plugin','loglevel')
+            logging.basicConfig(filename=logfilename,
+                    level=logging.INFO,
+                    format='%(asctime)s [%(levelname)s] %(name)s:%(funcName)s: %(message)s',
+                    )
+            self.logger = logging.getLogger(__name__)
+            if self.debug:
+                self.logger.setLevel(logging.DEBUG)
+            else:
+                self.logger.setLevel(loglevel)
 
+        except Exception, e:
+            # Might be nice to properly catch this and emit a nice message?
+            # Can't depend on "logger" here
+            raise e
+
+        try:
             self.license_key = config.get('site', 'key')
             self.api_url = config.get('site', 'url')
             self.duration = config.getint('plugin', 'duration')
@@ -97,6 +115,7 @@ class NewRHELic:
                         'http': '%s:%s' % (proxy_host, proxy_port),
                         'https': '%s:%s' % (proxy_host, proxy_port)
                 }
+                self.logger.info("Configured to use proxy: %s:%s" (proxy_host, proxy_port))
 
 
             #create a dictionary to hold the various data metrics.
@@ -126,9 +145,9 @@ class NewRHELic:
                 self.nfs_stats = {}
                 self.nfs_device_list = [] # Future version might allow filtering NFS devices
 
-        except Exception,e:
-            logging.exception(e)
-            raise
+        except Exception, e:
+            self.logger.exception(e)
+            raise e
 
     def _get_boottime(self):
         try:
@@ -137,8 +156,8 @@ class NewRHELic:
             boottime = "%s-%s-%s %s:%s:%s" % (a.tm_mon, a.tm_mday, a.tm_year, a.tm_hour, a.tm_min, a.tm_sec)
 
             return boottime
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             raise e
 
     def _get_sys_info(self):
@@ -168,7 +187,7 @@ class NewRHELic:
                 self.metric_data[title] = val
 
         except Exception, e:
-            logging.exception(e)
+            self.logger.exception(e)
             pass
 
     def _get_cpu_states(self):
@@ -179,8 +198,8 @@ class NewRHELic:
             for i in range(len(cpu_states)):
                 title = "Component/CPU/State Time/%s[percent]" % cpu_states._fields[i]
                 self.metric_data[title] = cpu_states[i]
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _get_cpu_utilization(self):
@@ -194,8 +213,8 @@ class NewRHELic:
             for i in range(len(cpu_util)):
                 title = "Component/CPU/Utilization/Processor-%s[percent]" % i
                 self.metric_data[title] = cpu_util[i]
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _get_cpu_load(self):
@@ -206,8 +225,8 @@ class NewRHELic:
             self.metric_data['Component/CPU/Load/1min[avg]'] = l[0]
             self.metric_data['Component/CPU/Load/5min[avg]'] = l[1]
             self.metric_data['Component/CPU/Load/15min[avg]'] = l[2]
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _get_disk_utilization(self):
@@ -219,7 +238,7 @@ class NewRHELic:
                 x = psutil.disk_usage(p.mountpoint)
                 self.metric_data[title] = x.percent
         except Exception, e:
-            logging.exception(e)
+            self.logger.exception(e)
             pass
 
     def _get_disk_stats(self):
@@ -241,8 +260,8 @@ class NewRHELic:
                     self.buffers[d._fields[i]] = d[i]
 
                 self.metric_data[title] = val
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _get_mem_stats(self):
@@ -262,8 +281,8 @@ class NewRHELic:
                     title = "Component/Memory/IO/%s[bytes]" % mem._fields[i]
 
                 self.metric_data[title] = mem[i]
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _get_swap_stats(self):
@@ -283,8 +302,8 @@ class NewRHELic:
                     val = swap[i]
 
                 self.metric_data[title] = val
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _update_nfs_stats(self):
@@ -350,8 +369,8 @@ class NewRHELic:
 
             for k,v in nfs_data.items():
                 self.metric_data[k] = v
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _get_nfs_stats(self):
@@ -361,9 +380,9 @@ class NewRHELic:
             if mounts > 0:
                 for vol in mounts:
                     self._get_nfs_info(vol)
-        except Exception,e:
-            print "ERROR: %s" % e
-            logging.exception(e)
+                    self.logger.debug("processing NFS volume - %s" % vol)
+        except Exception, e:
+            self.logger.exception(e)
             pass
 
     def _build_agent_stanza(self):
@@ -375,8 +394,8 @@ class NewRHELic:
             values['version'] = self.version
 
             self.json_data['agent'] = values
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             raise e
 
     def _reset_json_data(self):
@@ -385,8 +404,8 @@ class NewRHELic:
             self.metric_data = {}
             self.json_data = {}
             self._build_agent_stanza()
-        except Exception,e:
-            logging.exception(e)
+        except Exception, e:
+            self.logger.exception(e)
             raise e
 
     def _build_component_stanza(self):
@@ -421,9 +440,9 @@ class NewRHELic:
             c_list.append(c_dict)
 
             self.json_data['components'] = c_list
-        except Exception,e:
-            logging.exception(e)
-            raise(e)
+        except Exception, e:
+            self.logger.exception(e)
+            raise e
 
     def _prep_first_run(self):
         '''this will prime the needed buffers to present valid data when math is needed'''
@@ -446,16 +465,14 @@ class NewRHELic:
                 self.nfs_mountstats = nfsiostat.parse_stats_file('/proc/self/mountstats')
 
             #then we sleep so the math represents 1 minute intervals when we do it next
-            if self.debug:
-                print "FIRST RUN: Sleeping..."
+            self.logger.debug("First Run! Sleeping %d seconds..." % self.interval)
             time.sleep(self.interval)
             self.first_run = False
-            if self.debug:
-                print "The pump is primed"
+            self.logger.debug("The pump is primed")
 
             return True
         except Exception, e:
-            logging.excption(e)
+            self.logger.exception(e)
             raise e
 
     def add_to_newrelic(self):
@@ -478,22 +495,17 @@ class NewRHELic:
 
             response = opener.open(request, json.dumps(self.json_data))
 
-            if self.debug:
-                print request.get_full_url()
-                print response.getcode()
-                print json.dumps(self.json_data)
-                sys.stdout.flush()
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug("%s (%s)" % (request.get_full_url(), response.getcode()))
+                self.logger.debug(json.dumps(self.json_data))
 
             response.close()
 
         except urllib2.HTTPError, err:
-            if self.debug:
-                print err.code
-                print json.dumps(self.json_data)
+            self.logger.error("HTTP Error: %s" % err)
             pass    #i know, i don't like it either, but we don't want a single failed connection to break the loop.
 
         except urllib2.URLError, err:
-            if self.debug:
-                print err   #this error will kick if you lose DNS resolution briefly. We'll keep trying.
+            self.logger.error("URL Error (DNS Error?): %s" % err)
             pass
         self._reset_json_data()
