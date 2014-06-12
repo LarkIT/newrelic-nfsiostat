@@ -21,7 +21,7 @@ setup(
     maintainer_email = 'jduncan@redhat.com',
     long_description='A RHEL 6/CentOS 6-specific monitoring plugin for New Relic (http://www.newrelic.com)',
     packages=['psutil','daemon','daemon.version','lockfile'],
-    py_modules=['newrelic'],
+    py_modules=['newrelic','nfsiostat'],
     ext_modules=[
         Extension('_psutil_linux',['psutil/_psutil_linux.c']),
         Extension('_psutil_posix',['psutil/_psutil_posix.c'])],
