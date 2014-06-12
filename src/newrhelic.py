@@ -89,6 +89,12 @@ class NewRHELic:
                     )
             self.logger = logging.getLogger(__name__)
             if self.debug:
+                # DEBUG logs!
+                console = logging.StreamHandler()
+                formatter = logging.Formatter('%(levelname)-8s %(name)s:%(funcName)s: %(message)s')
+                console.setLevel(logging.DEBUG)
+                console.setFormatter(formatter)
+                self.logger.addHandler(console)
                 self.logger.setLevel(logging.DEBUG)
             else:
                 self.logger.setLevel(loglevel)
@@ -115,7 +121,7 @@ class NewRHELic:
                         'http': '%s:%s' % (proxy_host, proxy_port),
                         'https': '%s:%s' % (proxy_host, proxy_port)
                 }
-                self.logger.info("Configured to use proxy: %s:%s" (proxy_host, proxy_port))
+                self.logger.info("Configured to use proxy: %s:%s" % (proxy_host, proxy_port))
 
 
             #create a dictionary to hold the various data metrics.
