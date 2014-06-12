@@ -346,8 +346,7 @@ class NewRHELic:
     def _get_nfs_info(self, volume):
         '''this will add NFS stats for a given NFS mount to metric_data'''
         # This is mostly borrowed from nfsiostat display_iostats and its __print partners
-        if self.debug:
-            print "GNI: processing NFS volume - %s" % volume
+        self.logger.debug("processing NFS volume - %s" % volume
         try:
             sample_time = self.interval
             volname = 'Component/NFS/Volume%s/' % volume
