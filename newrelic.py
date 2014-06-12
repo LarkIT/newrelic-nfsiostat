@@ -32,12 +32,14 @@ import time
 from subprocess import Popen, PIPE
 import logging
 import socket
+import nfsiostat
 
 class NewRHELic:
 
-    def __init__(self, debug=False, conf='/etc/newrhelic.conf'):
+    def __init__(self, interval=60, debug=False, conf='/etc/newrhelic.conf'):
 
         self.config_file = conf
+        self.interval = interval
         socket.setdefaulttimeout(5)
 
         #store some system info
@@ -112,6 +114,12 @@ class NewRHELic:
                 self.enable_nfs = config.getboolean('plugin', 'enable_nfs')
 
             self._build_agent_stanza()
+
+            if self.enable_nfs:
+                # Initialize NFS related values
+                self.nfs_mountstats = None
+                self.nfs_stats = {}
+                self.nfs_device_list = [] # Future version might allow filtering NFS devices
 
         except Exception,e:
             logging.exception(e)
@@ -274,42 +282,65 @@ class NewRHELic:
             logging.exception(e)
             pass
 
-    def _get_nfs_mounts(self):
-        '''this will return either a list of active NFS mounts, or False'''
-        p = Popen(['/etc/init.d/netfs', 'status'], stdout=PIPE, stderr=PIPE)
-        mnt_data = p.stdout.readlines()
-        new_mnt_data = []
-        for i in range(len(mnt_data)):
-            if 'Active NFS mountpoints' not in mnt_data[i]: #if this exists, we remove it
-                new_mnt_data.append(mnt_data[i].rstrip())
-        return new_mnt_data
+    def _update_nfs_stats(self):
+        '''mostly borrowed from nfsiostat(.py), to update the NFS stat data'''
+        stats = {}
+        diff_stats = {}
+        devices = []
+        old = self.nfs_mountstats
+        new = nfsiostat.parse_stats_file('/proc/self/mountstats')
+        devices = nfsiostat.list_nfs_mounts(self.nfs_device_list,new)
 
+        if old:
+            # Trim device list to only include intersection of old and new data,
+            # this addresses umounts due to autofs mountpoints
+            devicelist = filter(lambda x:x in devices,old)
+        else:
+            devicelist = devices
+    
+        for device in devicelist:
+            stats[device] = nfsiostat.DeviceData()
+            stats[device].parse_stats(new[device])
+            if old:
+                old_stats = nfsiostat.DeviceData()
+                old_stats.parse_stats(old[device])
+                diff_stats[device] = stats[device].compare_iostats(old_stats)
+        
+        # Get ready for next iteration
+        self.nfs_mountstats = new
+        self.nfs_stats = diff_stats
+        # Return list of mounts
+        return devicelist
+
+   
     def _get_nfs_info(self, volume):
         '''this will add NFS stats for a given NFS mount to metric_data'''
+        # This is mostly borrowed from nfsiostat display_iostats and its __print partners
+        if self.debug:
+            print "GNI: processing NFS volume - %s" % volume
         try:
-            p = Popen(['/usr/sbin/nfsiostat', '%s' % volume ], stdout=PIPE, stderr=PIPE)
-            retcode = p.wait()
-            statdict = []
-            volname = 'Component/NFS%s/' % volume
-            for i in iter(p.stdout.readline, ''):
-                statdict.append(i.rstrip('/').rstrip())
-            statdict.remove(statdict[0])
-
+            sample_time = self.interval
+            volname = 'Component/NFS/Volume%s/' % volume
+            volnfsstat = self.nfs_stats[volume]
+            readstat = volnfsstat.get_rpc_op_stats('READ', sample_time)
+            writestat = volnfsstat.get_rpc_op_stats('WRITE', sample_time)
             nfs_data = {
-                volname + 'Metrics/ops[sec]': float(statdict[3].split()[0]),
-                volname + 'Metrics/rpcbklog[int]': float(statdict[3].split()[1]),
-                volname + 'Read/ops[sec]': float(statdict[5].split()[0]),
-                volname + 'Read/kb[sec]': float(statdict[5].split()[1]),
-                volname + 'Read/ops[kb]': float(statdict[5].split()[2]),
-                volname + 'Read/retrans[int]': int(statdict[5].split()[3]),
-                volname + 'Time/Read/RTT/avg[ms]': float(statdict[5].split()[5]),
-                volname + 'Time/Read/Execute Time/avg[ms]': float(statdict[5].split()[6]),
-                volname + 'Write/writes[sec]': float(statdict[7].split()[0]),
-                volname + 'Write/kb[sec]': float(statdict[7].split()[1]),
-                volname + 'Write/ops[kb]': float(statdict[7].split()[2]),
-                volname + 'Write/retrans[int]': int(statdict[7].split()[3]),
-                volname + 'Time/Write/RTT/avg[ms]': float(statdict[7].split()[5]),
-                volname + 'Time/Write/Execute Time/avg[ms]': float(statdict[7].split()[6]),
+                volname + 'Total/Operations[ops/second]': '%7.2f' % volnfsstat.ops(sample_time),
+                volname + 'RPC Backlog[calls]': '%7.2f' % volnfsstat.backlog(sample_time),
+
+                volname + 'Read/Operations[ops/second]': '%7.3f' % readstat[0],
+                volname + 'Read/Volume[KiB/second]': '%7.3f' % readstat[1],
+                volname + 'Read/Retransmits[calls]': '%7d' % readstat[3],
+                volname + 'Read/Average/Size[Kib/Operation]': '%7.3f' % readstat[2],
+                volname + 'Read/Average/RTT[ms/operation]': '%7.3f' % readstat[5],
+                volname + 'Read/Average/Execute Time[ms/operation]': '%7.3f' % readstat[6],
+
+                volname + 'Write/Operations[ops/second]': '%7.3f' % writestat[0],
+                volname + 'Write/Volume[KiB/second]': '%7.3f' % writestat[1],
+                volname + 'Write/Retransmits[calls]': '%7d' % writestat[3],
+                volname + 'Write/Average/Size[Kib/Operation]': '%7.3f' % writestat[2],
+                volname + 'Write/Average/RTT[ms/operation]': '%7.3f' % writestat[5],
+                volname + 'Write/Average/Execute Time[ms/operation]': '%7.3f' % writestat[6],
             }
 
             for k,v in nfs_data.items():
@@ -321,13 +352,12 @@ class NewRHELic:
     def _get_nfs_stats(self):
         '''this is called to iterate through all NFS mounts on a system and collate the data'''
         try:
-            mounts = self._get_nfs_mounts()
+            mounts = self._update_nfs_stats()
             if mounts > 0:
                 for vol in mounts:
                     self._get_nfs_info(vol)
-                    if self.debug:
-                        print "processing NFS volume - %s" % vol
         except Exception,e:
+            print "ERROR: %s" % e
             logging.exception(e)
             pass
 
@@ -386,7 +416,7 @@ class NewRHELic:
             c_list.append(c_dict)
 
             self.json_data['components'] = c_list
-        except Exception(e):
+        except Exception,e:
             logging.exception(e)
             raise(e)
 
@@ -407,8 +437,13 @@ class NewRHELic:
                 if swap_io._fields[i] == 'sin' or swap_io._fields[i] == 'sout':
                     self.buffers[swap_io._fields[i]] = swap_io[i]
 
+            if self.enable_nfs:
+                self.nfs_mountstats = nfsiostat.parse_stats_file('/proc/self/mountstats')
+
             #then we sleep so the math represents 1 minute intervals when we do it next
-            time.sleep(60)
+            if self.debug:
+                print "FIRST RUN: Sleeping..."
+            time.sleep(self.interval)
             self.first_run = False
             if self.debug:
                 print "The pump is primed"
