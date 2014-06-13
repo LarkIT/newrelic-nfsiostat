@@ -19,7 +19,7 @@
 # File Name : newrelic.py
 # Creation Date : 11-06-2013
 # Created By : Jamie Duncan
-# Last Modified : Sat 15 Feb 2014 04:26:18 PM EST
+# Last Modified : Thu 12 Jun 2014 04:49:23 PM EDT
 # Purpose : A RHEL/CentOS - specific OS plugin for New Relic
 
 import json
@@ -54,7 +54,6 @@ class NewRHELic:
         self.json_data = {}     #a construct to hold the json call data as we build it
 
         self.first_run = True   #this is set to False after the first run function is called
-
 
 	#Various IO buffers
         self.buffers = {
@@ -184,7 +183,10 @@ class NewRHELic:
     def _get_net_stats(self):
         '''This will form network IO stats for the entire system'''
         try:
-            io = psutil.net_io_counters()
+            try:
+                io = psutil.net_io_counters()
+            except AttributeError:
+                io = psutil.network_io_counters()
 
             for i in range(len(io)):
                 title = "Component/Network/IO/%s[bytes]" % io._fields[i]
@@ -453,7 +455,10 @@ class NewRHELic:
         '''this will prime the needed buffers to present valid data when math is needed'''
         try:
             #create the first counter values to do math against for network, disk and swap
-            net_io = psutil.net_io_counters()
+            try:
+                net_io = psutil.net_io_counters()
+            except AttributeError:
+                net_io = psutil.network_io_counters()
             for i in range(len(net_io)):
                 self.buffers[net_io._fields[i]] = net_io[i]
 
