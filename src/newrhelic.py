@@ -148,7 +148,8 @@ class NewRHELic:
                 # Initialize NFS related values
                 self.nfs_mountstats = None
                 self.nfs_stats = {}
-                self.nfs_device_list = [] # Future version might allow filtering NFS devices
+                self.nfs_device_list = json.loads(config.get('nfs','device_list'))
+                self.nfs_ops = ['Read','Write','GetAttr','Access','Lookup','ReadDir','ReadDirPlus']
 
         except Exception, e:
             self.logger.exception(e)
@@ -345,34 +346,30 @@ class NewRHELic:
         return devicelist
 
    
-    def _get_nfs_info(self, volume):
+    def _get_nfs_info(self, volume, prefix='Component/NFS/Volume'):
         '''this will add NFS stats for a given NFS mount to metric_data'''
         # This is mostly borrowed from nfsiostat display_iostats and its __print partners
-        self.logger.debug("processing NFS volume - %s" % volume
+        self.logger.debug("processing NFS volume - %s" % volume)
         try:
-            sample_time = self.interval
-            volname = 'Component/NFS/Volume%s/' % volume
+            prefix += volume + '/'
             volnfsstat = self.nfs_stats[volume]
-            readstat = volnfsstat.get_rpc_op_stats('READ', sample_time)
-            writestat = volnfsstat.get_rpc_op_stats('WRITE', sample_time)
             nfs_data = {
-                volname + 'Total/Operations[ops/second]': '%7.2f' % volnfsstat.ops(sample_time),
-                volname + 'RPC Backlog[calls]': '%7.2f' % volnfsstat.backlog(sample_time),
-
-                volname + 'Read/Operations[ops/second]': '%7.3f' % readstat[0],
-                volname + 'Read/Volume[KiB/second]': '%7.3f' % readstat[1],
-                volname + 'Read/Retransmits[calls]': '%7d' % readstat[3],
-                volname + 'Read/Average/Size[Kib/Operation]': '%7.3f' % readstat[2],
-                volname + 'Read/Average/RTT[ms/operation]': '%7.3f' % readstat[5],
-                volname + 'Read/Average/Execute Time[ms/operation]': '%7.3f' % readstat[6],
-
-                volname + 'Write/Operations[ops/second]': '%7.3f' % writestat[0],
-                volname + 'Write/Volume[KiB/second]': '%7.3f' % writestat[1],
-                volname + 'Write/Retransmits[calls]': '%7d' % writestat[3],
-                volname + 'Write/Average/Size[Kib/Operation]': '%7.3f' % writestat[2],
-                volname + 'Write/Average/RTT[ms/operation]': '%7.3f' % writestat[5],
-                volname + 'Write/Average/Execute Time[ms/operation]': '%7.3f' % writestat[6],
+                prefix + 'Total/Operations[ops/second]': '%7.2f' % volnfsstat.ops(self.interval),
+                prefix + 'RPC Backlog[calls]': '%7.2f' % volnfsstat.backlog(self.interval),
             }
+
+            for op in (self.nfs_ops):
+                op_stat = volnfsstat.get_rpc_op_stats(op.upper(), self.interval)
+                op_prefix = prefix + op
+                op_data = {
+                    op_prefix + '/Operations[ops/second]': '%7.3f' % op_stat[0],
+                    op_prefix + '/Volume[KiB/second]': '%7.3f' % op_stat[1],
+                    op_prefix + '/Retransmits[calls]': '%7d' % op_stat[3],
+                    op_prefix + '/Average/Size[Kib/Operation]': '%7.3f' % op_stat[2],
+                    op_prefix + '/Average/RTT[ms/operation]': '%7.3f' % op_stat[5],
+                    op_prefix + '/Average/Execute Time[ms/operation]': '%7.3f' % op_stat[6],
+                }
+                nfs_data.update(op_data)
 
             for k,v in nfs_data.items():
                 self.metric_data[k] = v
@@ -387,7 +384,6 @@ class NewRHELic:
             if mounts > 0:
                 for vol in mounts:
                     self._get_nfs_info(vol)
-                    self.logger.debug("processing NFS volume - %s" % vol)
         except Exception, e:
             self.logger.exception(e)
             pass
