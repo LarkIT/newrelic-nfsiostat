@@ -94,6 +94,7 @@ rm -rf %{buildroot}
 %{_docdir}/%{name}-%{version}/*
 %{python2_sitelib}/*egg-info
 %{python2_sitelib}/newrhelic*
+%{python2_sitelib}/nfsiostat*
 %{_bindir}/newrhelic
 
 %changelog
