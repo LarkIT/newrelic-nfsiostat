@@ -29,7 +29,6 @@ import ConfigParser
 import os
 import sys
 import time
-from subprocess import Popen, PIPE
 import logging
 import socket
 import nfsiostat
@@ -354,22 +353,24 @@ class NewRHELic:
             prefix += volume + '/'
             volnfsstat = self.nfs_stats[volume]
             nfs_data = {
-                prefix + 'Total/Operations[ops/second]': '%7.2f' % volnfsstat.ops(self.interval),
-                prefix + 'RPC Backlog[calls]': '%7.2f' % volnfsstat.backlog(self.interval),
+                prefix + 'Total/Operations[ops/second]': volnfsstat.ops(self.interval),
+                prefix + 'RPC Backlog[calls]': volnfsstat.backlog(self.interval),
             }
 
             for op in (self.nfs_ops):
                 op_stat = volnfsstat.get_rpc_op_stats(op.upper(), self.interval)
                 op_prefix = prefix + op
                 op_data = {
-                    op_prefix + '/Operations[ops/second]': '%7.3f' % op_stat[0],
-                    op_prefix + '/Volume[KiB/second]': '%7.3f' % op_stat[1],
-                    op_prefix + '/Retransmits[calls]': '%7d' % op_stat[3],
-                    op_prefix + '/Average/Size[Kib/Operation]': '%7.3f' % op_stat[2],
-                    op_prefix + '/Average/RTT[ms/operation]': '%7.3f' % op_stat[5],
-                    op_prefix + '/Average/Execute Time[ms/operation]': '%7.3f' % op_stat[6],
+                    op_prefix + '/Operations[ops/second]': op_stat[0],
+                    op_prefix + '/Volume[KiB/second]': op_stat[1],
+                    op_prefix + '/Retransmits[calls]': op_stat[3],
+                    op_prefix + '/RetransmitPercent[calls]': op_stat[3],
+                    op_prefix + '/Average/Size[Kib/Operation]': op_stat[2],
+                    op_prefix + '/Average/RTT[ms/operation]': op_stat[5],
+                    op_prefix + '/Average/Execute Time[ms/operation]': op_stat[6],
                 }
                 nfs_data.update(op_data)
+            # There is more NFS data that could be collected here
 
             for k,v in nfs_data.items():
                 self.metric_data[k] = v
