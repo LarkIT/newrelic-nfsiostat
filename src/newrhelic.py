@@ -56,6 +56,7 @@ class NewRHELic(object):
         self.debug = debug
 
         self.json_data = {}     #a construct to hold the json call data as we build it
+        json.encoder.FLOAT_REPR = lambda o: format(o, '.2f')
 
         self.first_run = True   #this is set to False after the first run function is called
 
@@ -364,10 +365,10 @@ class NewRHELic(object):
                 op_prefix = prefix + op
                 op_data = {
                     op_prefix + '/Operations[ops/second]': op_stat[0],
-                    op_prefix + '/Volume[KiB/second]': op_stat[1],
+                    op_prefix + '/Volume[KibiBytes/second]': op_stat[1],
                     op_prefix + '/Retransmits[calls]': op_stat[3],
                     op_prefix + '/RetransmitPercent[calls]': op_stat[3],
-                    op_prefix + '/Average/Size[Kib/Operation]': op_stat[2],
+                    op_prefix + '/Average/Size[KibiBytes/Operation]': op_stat[2],
                     op_prefix + '/Average/RTT[ms/operation]': op_stat[5],
                     op_prefix + '/Average/Execute Time[ms/operation]': op_stat[6],
                 }
