@@ -32,6 +32,7 @@ import time
 import logging
 import socket
 import nfsiostat
+import _version
 
 class NewRHELic:
 
@@ -39,7 +40,7 @@ class NewRHELic:
 
         self.guid = 'com.rhel.os_statistics'
         self.name = 'OS Statistics'
-        self.version = '0.2.0'
+        self.version = _version.__version__
         self.api_url = 'https://platform-api.newrelic.com/platform/v1/metrics'
         self.config_file = conf
         self.interval = interval
