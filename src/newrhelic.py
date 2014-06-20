@@ -34,7 +34,7 @@ import socket
 import nfsiostat
 import _version
 
-class NewRHELic:
+class NewRHELic(object):
 
     def __init__(self, interval=60, debug=False, conf='/etc/newrhelic.conf'):
 
