@@ -20,7 +20,7 @@
 
 Summary: NFSIOSTAT plugin for New Relic
 Name: newrelic-nfsiostat
-Version: 0.2.0
+Version: 0.1.0
 Release: 1%{?dist}
 Source0: https://github.com/DeliveryAgent/newrelic-nfsiostat/archive/%{name}-%{version}.tar.gz
 License: GPLv2
@@ -31,8 +31,6 @@ BuildRequires: python-setuptools
 BuildArch: noarch
 Requires: python%{pyver}
 Requires: python-daemon
-Obsoletes: NewRHELic
-Conflicts: NewRHELic
 
 # RHEL 5 has to use python26-psutils
 %if 0%{rhel} == 5
@@ -52,9 +50,8 @@ Requires(post): systemd-units
 BuildRequires: systemd-units
 %endif
 
-Vendor: Jamie Duncan <jduncan@redhat.com>
-#Packager: Jamie Duncan <jduncan@redhat.com>
-Url: https://github.com/jduncan-rva/newRHELic
+Vendor: Tommy McNeely <tommy@lark-it.com>
+Url: https://github.com/DeliveryAgent/newrelic-nfsiostat
 
 %description
 A New Relic plugin to send statistics from nfsiostat to NewRelic
@@ -95,51 +92,5 @@ rm -rf %{buildroot}
 %{_bindir}/newrelic-nfsiostat
 
 %changelog
-* Thu Jun 12 2014 Tommy McNeely <tommy@lark-it.com> 0.1-16
-- Added Obsoletes / Conflicts to replace old name
-
-* Thu Jun 12 2014 Tommy McNeely <tommy@lark-it.com> 0.1-15
-- Fixing all the EL7 vs EL6 vs EL5 issues (EL7 stuff was added by jduncan)
-
-* Thu Jun 12 2014 Tommy McNeely <tommy@lark-it.com> 0.1-14
-- attempts at making the same spec file work for EL5 and EL6
-
-* Sun Feb 23 2014 Jamie Duncan <jduncan@redhat.com> 0.1-13
-- improvements to spec file. looking to retire setup.cfg soon
-
-* Sat Feb 14 2014 Jamie Duncan <jduncan@redhat.com> 0.1-12
-- added spec file for future enhancement
-- added socket timeout (hard-coded @ 5seconds) to try and fix
-- the weird dead read syndrome we are seeing
-
-* Sun Dec 15 2013 Jamie Duncan <jduncan@redhat.com> 0.1-10
-- enabled an actual logging ability
-- enabled better error handling for when data is slow to be retrieved
-
-* Sun Nov 24 2013 Jamie Duncan <jduncan@redhat.com>
-- made master version live in the config file
-- moved pre/post install scripts into scripts directory
-
-* Thu Nov 21 2013 Jamie Duncan <jduncan@redhat.com> 0.1-8
-- made proxy type a config parameter
-
-* Wed Nov 20 2013 Jamie Duncan <jduncan@redhat.com> 0.1-7
-- urllib call wasn't routing through custom opener.
-- fixed and tested on public https proxy
-
-* Wed Nov 20 2013 Jamie Duncan <jduncan@redhat.com> 0.1-5
-- fixed web proxy code to work (mostly stolen from @sschwartzman
-
-* Tue Nov 19 2013 Jamie Duncan <jduncan@redhat.com> 0.1-4
-- fixed leading slash to allow Sys Info to show up
-
-* Thu Nov 14 2013 Jamie Duncan <jduncan@redhat.com> 0.1-3
-- created setup.cfg to help with RPM creation
-
-* Wed Nov 13 2013 Jamie Duncan <jduncan@redhat.com> 0.1-2
-- continued work on packaging for CMS
-
-* Wed Nov 13 2013 Jamie Duncan <jduncan@redhat.com> 0.1-1
-- initial CMS-specific buildout
-- added lockfile module
-- altered default config file to disable NFS by default
+* Thu Jun 26 2014 Tommy McNeely <tommy@lark-it.com> 0.1.0-1
+- Initial RPM after forking from NewRHELic
