@@ -126,21 +126,6 @@ class NFSPlugin(object):
             self.logger.exception(e)
             raise e
 
-    def _get_sys_info(self):
-        '''This will populate some basic system information
-    ### INPUT OTHER THAN INTEGERS IS CURRENLTLY NOT SUPPORTED BY NEW RELIC ###'''
-
-        try:
-            #self.metric_data['Component/System Information/Kernel[string]'] = self.kernel
-            #self.metric_data['Component/System Information/Arch[string]'] = self.arch
-            #self.metric_data['Component/System Information/Boot Time[datetime]'] = self._get_boottime()
-            self.metric_data['Component/System Information/Process Count[process]'] = len(psutil.get_pid_list())
-            self.metric_data['Component/System Information/Core Count[core]'] = psutil.NUM_CPUS
-            self.metric_data['Component/System Information/Active Sessions[session]'] = len(psutil.get_users())
-        except Exception, e:
-            loging.exception(e)
-            pass
-
     def _update_nfs_stats(self):
         '''mostly borrowed from nfsiostat(.py), to update the NFS stat data'''
         current_stats = {}
@@ -252,7 +237,6 @@ class NFSPlugin(object):
             c_dict['guid'] = self.guid
             c_dict['duration'] = self.duration
 
-            self._get_sys_info()
             self._get_nfs_stats()
 
             c_dict['metrics'] = self.metric_data
