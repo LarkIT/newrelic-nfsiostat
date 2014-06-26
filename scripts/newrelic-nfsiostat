@@ -21,15 +21,12 @@
 # Creation Date : 11-08-2013
 # Created By : Jamie Duncan
 # Last Modified : Sun 10 Nov 2013 10:03:51 PM EST
-# Purpose : a simple daemon for the NewRHELic plugin
+# Purpose : a simple daemon for the newrelic-nfsiostat plugin
 
 import time
 import os
 import sys
-
-new_path = os.path.join(os.getcwd(),'NewRHELic/')
-sys.path.append(new_path)
-
+#from daemon import runner
 try:
     from daemon import runner
 except ImportError:
@@ -38,17 +35,18 @@ except ImportError:
     from daemon import runner
     sys.path.remove('/usr/lib/python2.4/site-packages')
 
-from newrhelic.newrhelic import NewRHELic
+from newrelicnfs.plugin import NFSPlugin
 
 class RunApp:
     def __init__(self):
-        self.data = NewRHELic()
+        self.data = NFSPlugin()
         self.stdin_path = '/dev/null'
         self.stdout_path = '/dev/tty'
         self.stderr_path = '/dev/tty'
-        self.pidfile_path =  '/var/run/newrhelic.pid'
+        self.pidfile_path =  self.data.pid_file
         self.pidfile_timeout = 5
         self.files_preserve = self.getLogFileHandles(self.data.logger)
+        self.interval = self.data.interval
 
     def getLogFileHandles(self,logger):
         """ Get a list of filehandle numbers from logger
@@ -64,16 +62,16 @@ class RunApp:
     def run(self):
         while True:
             self.data.add_to_newrelic()
-            time.sleep(60)
+            time.sleep(self.interval)
 
-class NewRHELicDaemonRunner(runner.DaemonRunner):
+class MyDaemonRunner(runner.DaemonRunner):
     """ Extend the basic DaemonRunnner with file_preserve """
     def __init__(self, app):
-        super(NewRHELicDaemonRunner, self).__init__(app)
+        super(MyDaemonRunner, self).__init__(app)
         app.data.logger.warning('Our Special Runner')
         self.daemon_context.files_preserve = app.files_preserve
 
 
 app = RunApp()
-daemon_runner = NewRHELicDaemonRunner(app)
+daemon_runner = MyDaemonRunner(app)
 daemon_runner.do_action()
