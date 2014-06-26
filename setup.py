@@ -13,16 +13,16 @@ else:
     on_fedora = False
 
 exec(open('src/_version.py').read())
-name = 'newrhelic'
+name = 'newrelic-nfsiostat'
 version = __version__
 data_files=[
-    ('/etc',['conf/newrhelic.conf']),
+    ('/etc',['conf/newrelic-nfsiostat.conf']),
     ('/usr/share/doc/%s-%s'% (name, version), ['doc/README','doc/LICENSE']),
 ]
 if on_fedora:
-    data_files.append(('/usr/lib/systemd/system', ['scripts/newrhelic.service']))
+    data_files.append(('/usr/lib/systemd/system', ['scripts/newrelic-nfsiostat.service']))
 else:
-    data_files.append(('/etc/rc.d/init.d', ['scripts/newrhelic-plugin']))
+    data_files.append(('/etc/rc.d/init.d', ['scripts/newrelic-nfsiostat.init']))
  
 setup(
     name=name,
@@ -34,9 +34,9 @@ setup(
     maintainer='Jamie Duncan',
     maintainer_email = 'jduncan@redhat.com',
     long_description='A RHEL 6/CentOS 6-specific monitoring plugin for New Relic (http://www.newrelic.com)',
-    packages=['newrhelic'],
-    package_dir={'newrhelic': 'src'},
-    scripts = ['scripts/newrhelic'],
+    packages=['newrelic-nfsiostat'],
+    package_dir={'newrelic-nfsiostat': 'src'},
+    scripts = ['scripts/newrelic-nfsiostat'],
     data_files = data_files,
    )
 

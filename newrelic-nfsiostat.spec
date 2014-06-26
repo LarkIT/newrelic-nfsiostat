@@ -1,4 +1,4 @@
-### SPEC for newrhelic
+### SPEC for newrelic-nfsiostat
 
 # EL5 will require python26 from EPEL
 %if 0%{rhel} == 5
@@ -18,13 +18,11 @@
 %{!?_initddir: %define _initddir /etc/rc.d/init.d }
 
 
-Summary: RHEL/CentOS monitoring plugin for New Relic
-Name: newrhelic
-Version: 0.1
-Release: 16%{?dist}
-Source0: %{name}-%{version}.tar.gz
-#Source0: https://github.com/jduncan-rva/newRHELic/archive/%{name}-%{version}.tar.gz
-#Source0: https://github.com/jduncan-rva/newRHELic/archive/%{release}.tar.gz
+Summary: NFSIOSTAT plugin for New Relic
+Name: newrelic-nfsiostat
+Version: 0.2.0
+Release: 1%{?dist}
+Source0: https://github.com/DeliveryAgent/newrelic-nfsiostat/archive/%{name}-%{version}.tar.gz
 License: GPLv2
 Group: Applications/System
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXXX)
@@ -59,7 +57,7 @@ Vendor: Jamie Duncan <jduncan@redhat.com>
 Url: https://github.com/jduncan-rva/newRHELic
 
 %description
-A Red Hat Enterprise Linux-specific monitoring plugin for New Relic.
+A New Relic plugin to send statistics from nfsiostat to NewRelic
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -76,25 +74,25 @@ rm -rf %{buildroot}
 
 %post
 %if (0%{?rhel} >= 7 || 0%{?fedora} >= 15)
-/bin/systemctl enable newrhelic.service
+/bin/systemctl enable newrelic-nfsiostat.service
 %else
-/sbin/chkconfig --add newrhelic-plugin
+/sbin/chkconfig --add newrelic-nfsiostat
 %endif
 
 %files
 %defattr(-,root,root,-)
-%config(noreplace) /etc/newrhelic.conf
+%config(noreplace) /etc/newrelic-nfsiostat.conf
 %if (0%{?rhel} >= 7 || 0%{?fedora} >= 15)
-%{_unitdir}/newrhelic.service
+%{_unitdir}/newrelic-nfsiostat.service
 %else
-%config %attr(0755, root, root) %{_initddir}/newrhelic-plugin
+%config %attr(0755, root, root) %{_initddir}/newrelic-nfsiostat
 %endif
 
 %dir %{_docdir}/%{name}-%{version}
 %{_docdir}/%{name}-%{version}/*
 %{python2_sitelib}/*egg-info
-%{python2_sitelib}/newrhelic/*
-%{_bindir}/newrhelic
+%{python2_sitelib}/newrelic-nfsiostat/*
+%{_bindir}/newrelic-nfsiostat
 
 %changelog
 * Thu Jun 12 2014 Tommy McNeely <tommy@lark-it.com> 0.1-16
