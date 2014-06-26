@@ -34,8 +34,8 @@ setup(
     maintainer='Tommy McNeely',
     maintainer_email = 'tommy@lark-it.com',
     long_description='A plugin for New Relic (http://www.newrelic.com) to gather nfsiostat data',
-    packages=['newrelic-nfsiostat'],
-    package_dir={'newrelic-nfsiostat': 'src'},
+    packages=['newrelicnfs'],
+    package_dir={'newrelicnfs': 'src'},
     scripts = ['scripts/newrelic-nfsiostat'],
     data_files = data_files,
    )

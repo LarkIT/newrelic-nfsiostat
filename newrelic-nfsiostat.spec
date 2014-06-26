@@ -88,9 +88,12 @@ rm -rf %{buildroot}
 %dir %{_docdir}/%{name}-%{version}
 %{_docdir}/%{name}-%{version}/*
 %{python2_sitelib}/*egg-info
-%{python2_sitelib}/newrelic-nfsiostat/*
+%{python2_sitelib}/newrelicnfs/*
 %{_bindir}/newrelic-nfsiostat
 
 %changelog
+* Thu Jun 26 2014 Tommy McNeely <tommy@lark-it.com> 0.2.1-1
+- Fixing scripts, package names, etc
+
 * Thu Jun 26 2014 Tommy McNeely <tommy@lark-it.com> 0.2.0-1
 - Initial RPM after forking from NewRHELic
