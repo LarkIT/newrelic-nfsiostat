@@ -1,21 +1,15 @@
-newRHELic
+NewRelic-NFSIOStat
 =========
 
-A Red Hat Enteprise Linux plugin for New Relic
+A New Relic Plugin that gathers data from nfsiostat to push to newrelic.
 
-While it's not tested, it should also work with the RHEL-derived projects like
-
-* CentOS
-* Scientific Linux
-* Oracle Enterprise Linux
+This is "tested" on CentOS 6, but should work on RHEL/CentOS/etc 5-7.
 
 Monitoring Highlights
 ---------------------
 
-* Per-CPU utilization
-* Network Errors and Dropped packets
-* Swap Statistics
-* Detailed CPU State Times
+* Detailed NFS Statistics for ALL mountpoints or a "list"
+
 
 Installation
 ------------
@@ -25,11 +19,9 @@ Installation
     ```
     python setup.py sdist_rpm
     cd dist/
-    rpm -ivh <RPM You Just Made>.rpm / yum install <RPM You Just Made>.rpm
+    yum localinstall <RPM You Just Made>.rpm
     ```  
     
-    *Obviously you only have to use rpm OR yum (not both), and you only have to make the RPM for each architecture you're using.
-
 * Source Distribution
     * Download the source and execute:  
 
@@ -39,6 +31,4 @@ Installation
     tar zxf <The Tarball>
     cd <The Directory you just unzipped>
     python setup.py install
-    ```  
-
-    * Obviously you can move that tarball around after creating it once.
+    ```

@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# newrelic-nfsiostat          Start up the NewRelic NFSIOSTAT Plugin for New Relic Monitoring
+#
+# chkconfig: 35 99 10
+# description: NewRelic NFSIOSTAT Plugin
+#
+# processname: newrelic-nfsiostat
+# config: /etc/newrelic-nfsiostat.conf
+# pidfile: /var/run/newrelic-nfsiostat.pid
+
+/usr/bin/newrelic-nfsiostat $1
+

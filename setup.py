@@ -13,30 +13,30 @@ else:
     on_fedora = False
 
 exec(open('src/_version.py').read())
-name = 'newrhelic'
+name = 'newrelic-nfsiostat'
 version = __version__
 data_files=[
-    ('/etc',['conf/newrhelic.conf']),
+    ('/etc',['conf/newrelic-nfsiostat.conf']),
     ('/usr/share/doc/%s-%s'% (name, version), ['doc/README','doc/LICENSE']),
 ]
 if on_fedora:
-    data_files.append(('/usr/lib/systemd/system', ['scripts/newrhelic.service']))
+    data_files.append(('/usr/lib/systemd/system', ['scripts/newrelic-nfsiostat.service']))
 else:
-    data_files.append(('/etc/rc.d/init.d', ['scripts/newrhelic-plugin']))
+    data_files.append(('/etc/rc.d/init.d', ['scripts/init/newrelic-nfsiostat']))
  
 setup(
     name=name,
     version=version,
-    description='RHEL/CentOS monitoring plugin for New Relic',
-    author='Jamie Duncan',
-    author_email='jduncan@redhat.com',
-    url='https://github.com/jduncan-rva/newRHELic',
-    maintainer='Jamie Duncan',
-    maintainer_email = 'jduncan@redhat.com',
-    long_description='A RHEL 6/CentOS 6-specific monitoring plugin for New Relic (http://www.newrelic.com)',
-    packages=['newrhelic'],
-    package_dir={'newrhelic': 'src'},
-    scripts = ['scripts/newrhelic'],
+    description='NFSIOSTAT monitoring plugin for New Relic',
+    author='Tommy McNeely',
+    author_email='tommy@lark-it.com',
+    url='https://github.com/DeliveryAgent/newrelic-nfsiostat',
+    maintainer='Tommy McNeely',
+    maintainer_email = 'tommy@lark-it.com',
+    long_description='A plugin for New Relic (http://www.newrelic.com) to gather nfsiostat data',
+    packages=['newrelic-nfsiostat'],
+    package_dir={'newrelic-nfsiostat': 'src'},
+    scripts = ['scripts/newrelic-nfsiostat'],
     data_files = data_files,
    )
 

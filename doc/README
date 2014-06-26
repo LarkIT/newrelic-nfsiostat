@@ -1,4 +1,4 @@
-newRHELic
+newrelic-nfsiostat
 =========
 
-RHEL-centric plugin for New Relic Monitoring App
+NFSIOSTAT plugin for New Relic Monitoring App

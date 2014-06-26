@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
+# Copyright (C) 2014  Tommy McNeely (tmcneely@deliveryagent.com)
 # Copyright (C) 2013  Jamie Duncan (jamie.e.duncan@gmail.com)
 
 # This program is free software; you can redistribute it and/or
@@ -16,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# File Name : newrhelic
+# File Name : newrelic-nfsiostat
 # Creation Date : 11-08-2013
 # Created By : Jamie Duncan
 # Last Modified : Sun 10 Nov 2013 10:03:51 PM EST
