@@ -62,8 +62,9 @@ class NFSPlugin(object):
         # Variables to hold various stats
         self.metric_data = {}
         self.json_data = {}     #a construct to hold the json call data as we build it
-        self.nfs_mountstats = None
         self.nfs_stats = {}
+        self.nfs_stats_old = {}
+        self.nfs_stats_current = {}
 
         # This is hackery to format the "float" values reasonably
         json.encoder.FLOAT_REPR = lambda o: format(o, '.2f')
@@ -107,6 +108,8 @@ class NFSPlugin(object):
             self.license_key = config.get('plugin', 'key')
             self.pid_file = config.get('plugin', 'pidfile')
             self.interval = config.getint('plugin', 'interval')
+            self.enable_nfs_aggregate = config.getboolean('plugin','enable_nfs_aggregate')
+            self.enable_nfs_reportvolumes = config.getboolean('plugin','enable_nfs_reportvolumes')
             self.enable_proxy = config.getboolean('proxy','enable_proxy')
 
             if self.enable_proxy:
@@ -130,35 +133,41 @@ class NFSPlugin(object):
         '''mostly borrowed from nfsiostat(.py), to update the NFS stat data'''
         current_stats = {}
         diff_stats = {}
-        devices = []
-        old = self.nfs_mountstats
-        new = nfsiostat.parse_stats_file('/proc/self/mountstats')
-        devices = nfsiostat.list_nfs_mounts(self.nfs_device_list,new)
+        old_stats = self.nfs_stats_old
+        mountstats = nfsiostat.parse_stats_file('/proc/self/mountstats')
+        devices = nfsiostat.list_nfs_mounts(self.nfs_device_list,mountstats)
 
-        if old:
-            # Trim device list to only include intersection of old and new data,
+        if old_stats:
+            # Trim device list to only include intersection of old_stats and mountstats data,
             # this addresses umounts due to autofs mountpoints
-            devicelist = filter(lambda x:x in devices,old)
+            devicelist = filter(lambda x:x in devices,old_stats)
         else:
             devicelist = devices
     
         for device in devicelist:
             current_stats[device] = nfsiostat.DeviceData()
-            current_stats[device].parse_stats(new[device])
-            if old:
-                old_stats = nfsiostat.DeviceData()
-                old_stats.parse_stats(old[device])
-                diff_stats[device] = current_stats[device].compare_iostats(old_stats)
+            current_stats[device].parse_stats(mountstats[device])
+            if old_stats:
+                diff_stats[device] = current_stats[device].compare_iostats(old_stats[device])
+            if self.enable_nfs_aggregate:
+                if 'ALL' in current_stats:
+                    current_stats['ALL'] = current_stats['ALL'].combine_iostats(current_stats[device])
+                else:
+                    current_stats['ALL'] = nfsiostat.DeviceData()
+                    current_stats['ALL'].parse_stats(mountstats[device])
+
+        # Get diffs of aggregate stats
+        if self.enable_nfs_aggregate and old_stats:
+            diff_stats['ALL'] = current_stats['ALL'].compare_iostats(old_stats['ALL'])
         
         # Get ready for next iteration
-        self.nfs_mountstats_new = new
         # NOTE: If the newrelic push is successful, we will update
-        #  self.nfs_mountstats with nfs_mountstats_new
+        #  self.nfs_stats_old with the current nfs_stats
+        self.nfs_stats_current = current_stats
         self.nfs_stats = diff_stats
         # Return list of mounts
         return devicelist
 
-   
     def _get_nfs_stat_for(self, volume, prefix='Component/NFS/Volume'):
         '''this will add NFS stats for a given NFS mount to metric_data'''
         # This is mostly borrowed from nfsiostat display_iostats and its __print partners
@@ -196,9 +205,11 @@ class NFSPlugin(object):
         '''this is called to iterate through all NFS mounts on a system and collate the data'''
         try:
             mounts = self._update_nfs_stats()
-            if mounts > 0:
+            if self.enable_nfs_reportvolumes:
                 for vol in mounts:
                     self._get_nfs_stat_for(vol)
+            if self.enable_nfs_aggregate:
+                self._get_nfs_stat_for('ALL','Component/NFS/')
         except Exception, e:
             self.logger.exception(e)
             pass
@@ -251,7 +262,10 @@ class NFSPlugin(object):
         '''this will prime the needed buffers to present valid data when math is needed'''
         try:
             #create the first counter values to do math against for network, disk and swap
-            self.nfs_mountstats = nfsiostat.parse_stats_file('/proc/self/mountstats')
+            self._update_nfs_stats()
+
+            # Pretend run was successful to get stats initialized properly
+            self._successful_run_reset()
 
             #sleep so the math represents  (interval) second intervals when we actually run
             self.logger.debug("First Run! Sleeping %d seconds..." % self.interval)
@@ -265,8 +279,7 @@ class NFSPlugin(object):
     def _successful_run_reset(self):
         ''' This will reset the statistics upon successful run'''
         self.duration_start = int(time.time())
-        self.nfs_mountstats = self.nfs_mountstats_new
-        self.nfs_mountstats_new = None
+        self.nfs_stats_old = self.nfs_stats_current
 
     def add_to_newrelic(self):
         '''this will glue it all together into a json request and execute'''
