@@ -30,6 +30,11 @@ def difference(x, y):
     """
     return x - y
 
+def combination(x, y):
+    """Used for a map() function
+    """
+    return x + y
+
 NfsEventCounters = [
     'inoderevalidates',
     'dentryrevalidates',
@@ -189,6 +194,35 @@ class DeviceData:
         elif self.__nfs_data['fstype'] == 'nfs4':
             return True
         return False
+
+    def combine_iostats(self, add_stats):
+        """Return the combination of two sets of stats
+        """
+        result = DeviceData()
+
+        # copy self into result
+        for key, value in self.__nfs_data.iteritems():
+            result.__nfs_data[key] = value
+        for key, value in self.__rpc_data.iteritems():
+            result.__rpc_data[key] = value
+
+        # compute the combination of each item in the list
+        # note the copy loop above does not copy the lists, just
+        # the reference to them.  so we build new lists here
+        # for the result object.
+        for op in result.__rpc_data['ops']:
+            result.__rpc_data[op] = map(combination, self.__rpc_data[op], add_stats.__rpc_data[op])
+
+        # update the remaining keys we care about
+        result.__rpc_data['rpcsends'] += add_stats.__rpc_data['rpcsends']
+        result.__rpc_data['backlogutil'] += add_stats.__rpc_data['backlogutil']
+
+        for key in NfsEventCounters:
+            result.__nfs_data[key] += add_stats.__nfs_data[key]
+        for key in NfsByteCounters:
+            result.__nfs_data[key] += add_stats.__nfs_data[key]
+
+        return result
 
     def compare_iostats(self, old_stats):
         """Return the difference between two sets of stats
