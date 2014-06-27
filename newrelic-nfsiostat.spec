@@ -20,7 +20,7 @@
 
 Summary: NFSIOSTAT plugin for New Relic
 Name: newrelic-nfsiostat
-Version: 0.2.1
+Version: 0.2.2
 Release: 1%{?dist}
 Source0: https://github.com/DeliveryAgent/newrelic-nfsiostat/archive/%{name}-%{version}.tar.gz
 License: GPLv2
@@ -92,6 +92,10 @@ rm -rf %{buildroot}
 %{_bindir}/newrelic-nfsiostat
 
 %changelog
+* Thu Jun 26 2014 Tommy McNeely <tommy@lark-it.com> 0.2.2-1
+- Updating to v0.2.2
+- Adds NFS Aggregate Stats
+
 * Thu Jun 26 2014 Tommy McNeely <tommy@lark-it.com> 0.2.1-1
 - Fixing scripts, package names, etc
 
