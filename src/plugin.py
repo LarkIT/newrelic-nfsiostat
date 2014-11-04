@@ -25,6 +25,7 @@
 import json
 import psutil
 import urllib2
+import httplib
 import ConfigParser
 import os
 import sys
