@@ -313,6 +313,11 @@ class NFSPlugin(object):
 
             response.close()
 
+        except httplib.BadStatusLine, err:
+            self.logger.error(err)
+            self.logger.debug("Error - BAD STATUS: %s" % err.read())
+            pass # continue on this error
+
         except urllib2.HTTPError, err:
             self.logger.error(err)
             self.logger.debug("ErrorPage: %s" % err.read())
