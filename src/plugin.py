@@ -310,23 +310,24 @@ class NFSPlugin(object):
                 self.logger.debug('Response: %s' % response.read())
 
             if response.code == 200:
+                # Only reset on success (allows the exceptions below to continue)
                 self._successful_run_reset()
 
             response.close()
 
-        except httplib.BadStatusLine, err:
+        except httplib.HTTPException, err:
             self.logger.error(err)
-            self.logger.debug("Error - BAD STATUS: %s" % err.read())
-            pass # continue on this error
+            self.logger.debug("HTTP Exception: %s" % err.read())
+            pass    # continue on this error
 
         except urllib2.HTTPError, err:
             self.logger.error(err)
-            self.logger.debug("ErrorPage: %s" % err.read())
-            pass    #i know, i don't like it either, but we don't want a single failed connection to break the loop.
+            self.logger.debug("HTTP Error: %s" % err.read())
+            pass    # continue
 
         except urllib2.URLError, err:
             # URLError (DNS Error?)
             self.logger.error(err)
-            self.logger.debug('Reason: %s' % err.reason)
-            pass
+            self.logger.debug('URL Error: %s' % err.reason)
+            pass    # continue
         self._reset_json_data()
