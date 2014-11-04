@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # newrelic-nfsiostat          Start up the NewRelic NFSIOSTAT Plugin for New Relic Monitoring
-#
+# 
 # chkconfig: 35 99 10
 # description: NewRelic NFSIOSTAT Plugin
 #
@@ -9,5 +9,110 @@
 # config: /etc/newrelic-nfsiostat.conf
 # pidfile: /var/run/newrelic-nfsiostat.pid
 
-/usr/bin/newrelic-nfsiostat $1
+
+# Source function library.
+. /etc/init.d/functions
+
+# APP
+APP="/usr/bin/newrelic-nfsiostat"
+
+PID_FILE="/var/run/newrelic-nfsiostat.pid"
+
+dostatus() {
+  [ -e "${PID_FILE}" ] || return 1
+
+  local pid=$(cat ${PID_FILE})
+  [ -d /proc/${pid} ] || return 1
+
+  [ -z "$(grep $APP /proc/${pid}/cmdline)" ] && return 1
+  return 0
+}
+
+
+start() {
+ if [ ${EUID} -ne 0 ]; then
+    echo -n $"you must be root"
+    failure $"you must be root"
+    echo
+    return 1
+  fi
+
+  dostatus
+  if [ $? -eq 0 ]; then
+    echo -n "cannot start $APP: already running (pid: $(cat ${PID_FILE}))";
+    failure "cannot start $APP: already running (pid: $(cat ${PID_FILE}))";
+    echo
+    return 1
+  fi
+
+  echo -n $"Starting ${APP}: "
+  ${APP} $1 && success || failure
+  RETVAL=$?
+
+  echo
+  return ${RETVAL}
+
+}
+
+stop() {
+  if [ ${EUID} -ne 0 ]; then
+    echo -n "you must be root"
+    failure "you must be root"
+    echo
+    return 1
+  fi
+
+  echo -n "Stopping ${APP}: "
+
+  dostatus
+  if [ $? -ne 0 ]; then
+    echo -n "cannot stop $APP: not running"
+    failure "cannot stop $APP: not running"
+    echo
+    return 1
+  fi
+
+  killproc -p "${PID_FILE}" "${APP}"
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && rm -f ${PID_FILE}
+  echo
+  return $RETVAL
+}
+
+
+restart() {
+  stop
+  start
+}
+
+
+# case input evaluation
+case "$1" in
+  start)
+    start $1
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    restart
+    ;;
+  status)
+    dostatus
+    if [ $? -eq 0 ]; then
+      echo "$APP: running"
+      RETVAL=0
+    else
+      echo "$APP: not running"
+      RETVAL=1
+    fi
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|status|restart}"
+    RETVAL=2
+    ;;
+esac
+
+exit $RETVAL
+
 

@@ -41,7 +41,7 @@ class RunApp:
     def __init__(self):
         self.data = NFSPlugin()
         self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/tty'
+        self.stdout_path = '/dev/null'
         self.stderr_path = '/dev/tty'
         self.pidfile_path =  self.data.pid_file
         self.pidfile_timeout = 5

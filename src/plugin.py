@@ -123,7 +123,7 @@ class NFSPlugin(object):
                 self.logger.info("Configured to use proxy: %s:%s" % (proxy_host, proxy_port))
             # Initialize NFS related values
             self.nfs_device_list = json.loads(config.get('nfs','device_list'))
-            self.nfs_ops = ['Read','Write','GetAttr','Access','Lookup','ReadDir','ReadDirPlus']
+            self.nfs_ops = ['Read','Write','GetAttr','Access','Lookup','ReadDir']
 
         except Exception, e:
             self.logger.exception(e)
