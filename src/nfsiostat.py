@@ -422,6 +422,8 @@ class DeviceData:
             return (float(self.__rpc_data['backlogutil']) / sends) / sample_time
         else:
             return 0.0
+    def has_readdirplus(self):
+        return self.__rpc_data.has_key('READDIRPLUS')
 
     def display_iostats(self, sample_time, which):
         """Display NFS and RPC stats in an iostat-like way

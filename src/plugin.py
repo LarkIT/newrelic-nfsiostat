@@ -124,7 +124,7 @@ class NFSPlugin(object):
                 self.logger.info("Configured to use proxy: %s:%s" % (proxy_host, proxy_port))
             # Initialize NFS related values
             self.nfs_device_list = json.loads(config.get('nfs','device_list'))
-            self.nfs_ops = ['Read','Write','GetAttr','Access','Lookup','ReadDir']
+            self.nfs_ops = ['Read','Write','GetAttr','Access','Lookup','ReadDir','ReadDirPlus']
 
         except Exception, e:
             self.logger.exception(e)
@@ -182,6 +182,9 @@ class NFSPlugin(object):
             }
 
             for op in (self.nfs_ops):
+                if op.upper() is 'READDIRPLUS' and not volnfsstat.has_readdirplus():
+                    # NFSv4 mounts do not have READDIRPLUS
+                    continue
                 op_stat = volnfsstat.get_rpc_op_stats(op.upper(), self.duration)
                 op_prefix = prefix + op
                 op_data = {
