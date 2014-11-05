@@ -20,7 +20,7 @@
 
 Summary: NFSIOSTAT plugin for New Relic
 Name: newrelic-nfsiostat
-Version: 0.2.2
+Version: 0.2.3
 Release: 1%{?dist}
 Source0: https://github.com/DeliveryAgent/newrelic-nfsiostat/archive/%{name}-%{version}.tar.gz
 License: GPLv2
