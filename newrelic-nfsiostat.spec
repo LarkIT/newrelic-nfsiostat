@@ -92,6 +92,12 @@ rm -rf %{buildroot}
 %{_bindir}/newrelic-nfsiostat
 
 %changelog
+* Tue Nov 04 2014 Tommy McNeely <tommy@lark-it.com> 0.2.3-1
+- Updating to v0.2.3
+- Fixed Issue #8 - Crash on httplib.BadStatusLine
+- Fixed Issue #7 - Crash on start at boot (No such device /dev/tty)
+- Fixed Issue #6 - Fix for no data when using NFSv4 (ReadDirPlus)
+
 * Thu Jun 26 2014 Tommy McNeely <tommy@lark-it.com> 0.2.2-1
 - Updating to v0.2.2
 - Adds NFS Aggregate Stats
