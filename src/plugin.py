@@ -319,18 +319,16 @@ class NFSPlugin(object):
             response.close()
 
         except httplib.HTTPException, e:
-            self.logger.error(e)
-            self.logger.debug("HTTP Exception: %s" % e)
+            self.logger.error('HTTP Exception: %s' % e)
             pass    # continue on this error
 
         except urllib2.HTTPError, e:
-            self.logger.error(e)
-            self.logger.debug("HTTP Error: %s" % e.read())
+            self.logger.error('HTTP Error: %s' % e)
+            self.logger.debug('HTTP Error Details: %s' % e.read())
             pass    # continue
 
         except urllib2.URLError, e:
             # URLError (DNS Error?)
-            self.logger.error(e)
-            self.logger.debug('URL Error: %s' % e.reason)
+            self.logger.error('URL Error: %s' % e.reason)
             pass    # continue
         self._reset_json_data()
