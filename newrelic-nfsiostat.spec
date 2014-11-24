@@ -20,7 +20,7 @@
 
 Summary: NFSIOSTAT plugin for New Relic
 Name: newrelic-nfsiostat
-Version: 0.2.4
+Version: 0.2.5
 Release: 1%{?dist}
 Source0: https://github.com/DeliveryAgent/newrelic-nfsiostat/archive/%{name}-%{version}.tar.gz
 License: GPLv2
@@ -92,6 +92,9 @@ rm -rf %{buildroot}
 %{_bindir}/newrelic-nfsiostat
 
 %changelog
+* Mon Nov 24 2014 Tommy McNeely <tommy@lark-it.com> 0.2.5-1
+- fixes #16 - More complete fix to the /dev/tty issues (See Issue #7)
+
 * Tue Nov 04 2014 Tommy McNeely <tommy@lark-it.com> 0.2.4-1
 - Fixed Issue #13 - Crash on error handling (See Issue #8)
 
