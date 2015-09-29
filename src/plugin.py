@@ -182,7 +182,7 @@ class NFSPlugin(object):
             }
 
             for op in (self.nfs_ops):
-                if op.upper() is 'READDIRPLUS' and not volnfsstat.has_readdirplus():
+                if op.upper() == 'READDIRPLUS' and not volnfsstat.has_readdirplus():
                     # NFSv4 mounts do not have READDIRPLUS
                     continue
                 op_stat = volnfsstat.get_rpc_op_stats(op.upper(), self.duration)
